@@ -12,8 +12,13 @@ init:
 	poetry dynamic-versioning enable
 	poetry install
 
+init-dev: init
+	install-glue-kernels
+
 dist: pyproject.toml $(SRC_FILES)
 	poetry dynamic-versioning enable && poetry build
 
 clean:
 	rm -rf $(DIST)
+
+.PHONY: clean init init-dev
