@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "aws-glue-etl-extensions"
+version = "0.1.0"
+description = ""
+authors = ["Martin Macak <martin.macak@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "aws-glue-etl-extensions", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.10,<3.11"
+
+
+
+[tool.poetry-dynamic-versioning]
+enable = true
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"

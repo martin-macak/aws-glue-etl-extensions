@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+function log() {
+    echo "==> $1"
+}
+
+function check_asdf_availability() {
+    if ! command -v asdf >/dev/null; then
+        log "asdf not available."
+        exit 1
+    fi
+}
+
+function login_codeartifacts() {
+    log "Logging into codeartifact..."
+    aws codeartifact login --tool pip --domain vertice --domain-owner 956888343153 --repository shared
+}
+
+function check_asdf_plugin() {
+    if ! asdf plugin list | grep -i $1 >/dev/null; then
+        log "asdf plugin $1 not installed. Run: 'asdf plugin add $1'"
+        exit 1
+    fi
+}
+
+function install_env_deps() {
+    log "Installing dependencies with asdf..."
+    asdf install python
+    asdf install poetry
+    log "current setup"
+    asdf current
+}
+
+function update_venv() {
+    if [[ -d .venv ]]; then
+        if ! .venv/bin/python --version | xargs -I {} grep -i {} .tool-versions >/dev/null; then
+            echo "Python .venv version is incorrect. Removing .venv..."
+            rm -rf .venv
+        fi
+    fi
+
+    if [[ ! -d .venv ]]; then
+        echo "Creating virtual environment..."
+        python -m venv .venv
+    fi
+}
+
+function setup_poetry_login() {
+    export POETRY_HTTP_BASIC_CODEARTIFACT_USERNAME=aws
+    export POETRY_HTTP_BASIC_CODEARTIFACT_PASSWORD=$(aws codeartifact get-authorization-token --domain-owner 956888343153 --domain vertice --query 'authorizationToken' --output text)
+}
+
+function setup_pypirc() {
+    CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain vertice --domain-owner 956888343153 --query authorizationToken --output text)
+	  pip config set global.extra-index-url https://aws:$CODEARTIFACT_AUTH_TOKEN@vertice-956888343153.d.codeartifact.eu-west-1.amazonaws.com/pypi/shared/simple/
+}
+
+check_asdf_availability
+
+login_codeartifacts
+
+check_asdf_plugin "python"
+check_asdf_plugin "poetry"
+
+install_env_deps
+
+update_venv
+
+source .venv/bin/activate
+
+setup_poetry_login
+setup_pypirc
